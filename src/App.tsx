@@ -9,7 +9,8 @@ const App: Solid.Component = () => {
   });
 
   Solid.createEffect(() => {
-    setChosen(JSON.parse(atob(window.location.hash.substring(1))));
+    if (window.location.hash)
+      setChosen(JSON.parse(atob(window.location.hash.substring(1))));
   });
 
   Solid.createEffect(() => {
