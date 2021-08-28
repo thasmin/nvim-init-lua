@@ -8,6 +8,8 @@ interface Option {
 interface Plugin {
   slug: string;
   name: string;
+  description: string;
+  homepage: string;
   code: string;
   packageManagerCode: Record<PackageManagerOption, string>;
   options: Option[];
@@ -33,6 +35,8 @@ const packer: PackageManager = {
 const nvim_treesitter: Plugin = {
   slug: "nvim-treesitter",
   name: "Nvim-Treesitter",
+  description: "Treesitter configurations and abstraction layer.",
+  homepage: "https://github.com/nvim-treesitter/nvim-treesitter",
   packageManagerCode: {
     packer: "use {'nvim-treesitter/nvim-treesitter', run = ':TSUpdate'}",
   },
@@ -63,6 +67,9 @@ vim.o.foldlevel = 99
 const nvim_lspconfig: Plugin = {
   slug: "nvim-lspconfig",
   name: "Nvim-LSPConfig",
+  description:
+    "A collection of common configurations for Neovim's built-in language server client.",
+  homepage: "https://github.com/neovim/nvim-lspconfig",
   packageManagerCode: {
     packer: "use 'neovim/nvim-lspconfig'",
   },
@@ -97,6 +104,8 @@ end
 const bufferline: Plugin = {
   slug: "bufferline",
   name: "Bufferline",
+  description: "A snazzy buffer line with minimal tab integration.",
+  homepage: "https://github.com/akinsho/bufferline.nvim",
   packageManagerCode: {
     packer:
       "use {'akinsho/nvim-bufferline.lua', requires = 'kyazdani42/nvim-web-devicons'}",
@@ -120,6 +129,8 @@ vim.api.nvim_set_keymap('n', '<Right>', ':bn<CR>', { noremap=true, silent=True }
 const nvim_tree: Plugin = {
   slug: "nvim-tree",
   name: "Nvim-Tree",
+  description: "A file explorer",
+  homepage: "https://github.com/kyazdani42/nvim-tree.lua",
   packageManagerCode: {
     packer:
       "use {'kyazdani42/nvim-tree.lua', requires = 'kyazdani42/nvim-web-devicons'}",
@@ -131,6 +142,8 @@ const nvim_tree: Plugin = {
 const telescope: Plugin = {
   slug: "telescope",
   name: "Telescope",
+  description: "An extendable fuzzy finder over lists",
+  homepage: "https://github.com/nvim-telescope/telescope.nvim",
   packageManagerCode: {
     packer:
       "use {'nvim-telescope/telescope.nvim', requires = {{'nvim-lua/popup.nvim'}, {'nvim-lua/plenary.nvim'}}}",
@@ -144,10 +157,51 @@ vim.api.nvim_set_keymap('n', '<C-P>', '<cmd>lua require("telescope.builtin").fin
   options: [],
 };
 
+const lspkind: Plugin = {
+  slug: "lspkind",
+  name: "Lspkind",
+  description: "Adds vscode-like pictograms to lsp",
+  homepage: "https://github.com/onsails/lspkind-nvim",
+  packageManagerCode: {
+    packer: "use 'onsails/lspkind-nvim'",
+  },
+  code: `
+require('lspkind').init({
+  -- default for nerd-fonts, codicon for vscode-codicons font
+  preset = 'default',
+})`,
+  options: [],
+};
+
+const indentBlankline: Plugin = {
+  slug: "indent-blankline",
+  name: "Indent-blankline",
+  homepage: "https://github.com/lukas-reineke/indent-blankline.nvim",
+  description: "Adds indentation guides to all lines",
+  packageManagerCode: {
+    packer: "use 'lukas-reineke/indent-blankline.nvim'",
+  },
+  code: `
+require("indent_blankline").setup {
+  char = "|",
+  buftype_exclude = {"terminal"}
+}`,
+  options: [],
+};
+
 const config: Config = {
   packageManagers: { packer: packer },
-  plugins: [nvim_treesitter, nvim_lspconfig, telescope, bufferline, nvim_tree],
+  plugins: [
+    nvim_treesitter,
+    nvim_lspconfig,
+    telescope,
+    bufferline,
+    nvim_tree,
+    lspkind,
+    indentBlankline,
+  ],
 };
+
 export default config;
 
 export const packerConfig = `

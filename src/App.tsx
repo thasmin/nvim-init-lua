@@ -1,7 +1,8 @@
 import * as Solid from "solid-js";
 import config, * as constants from "./constants";
 
-import "./style.css";
+import "./style.scss";
+import iconLinkout from "./assets/linkout.svg";
 
 const App: Solid.Component = () => {
   const [chosen, setChosen] = Solid.createSignal<any>({
@@ -15,6 +16,9 @@ const App: Solid.Component = () => {
 
   Solid.createEffect(() => {
     window.location.hash = btoa(JSON.stringify(chosen()));
+    document.getElementById("finalConfig").textContent = finalConfig();
+    //@ts-ignore
+    hljs.highlightAll();
   });
 
   const finalConfig = Solid.createMemo(() => {
@@ -45,7 +49,7 @@ vim.o.shiftwidth = ${current.indentSize}
         pieces.push(`-- ${pl.slug}`);
         pieces.push(pl.code);
         pl.options
-          .filter((opt) => current[pl.slug][opt.slug])
+          .filter((opt) => current[pl.slug].includes(opt.slug))
           .forEach((opt) => pieces.push(opt.code));
       });
     return pieces.join("\n");
@@ -53,9 +57,10 @@ vim.o.shiftwidth = ${current.indentSize}
 
   const togglePlugin = (plugin: string, open: boolean) => {
     if (open) {
-      if (!chosen()[plugin]) updateChosen({ [plugin]: {} });
+      if (!chosen()[plugin]) updateChosen({ [plugin]: [] });
     } else {
-      updateChosen({ [plugin]: false });
+      const { [plugin]: omit, ...rest } = chosen();
+      setChosen(rest);
     }
   };
 
@@ -63,7 +68,12 @@ vim.o.shiftwidth = ${current.indentSize}
 
   const toggleOption = (plugin: string, option: string, open: boolean) => {
     const currOpts = chosen()[plugin];
-    setChosen((ch) => ({ ...ch, [plugin]: { ...currOpts, [option]: open } }));
+    if (open) setChosen((ch) => ({ ...ch, [plugin]: [...currOpts, option] }));
+    else
+      setChosen((ch) => ({
+        ...ch,
+        [plugin]: currOpts.filter((opt) => opt != option),
+      }));
   };
 
   const copyToClipboard = () => {
@@ -79,16 +89,19 @@ vim.o.shiftwidth = ${current.indentSize}
   return (
     <div>
       <div id="container">
-        <div>
-          <div style={`float: right`}>
-            <button onClick={copyToClipboard}>Copy to Clipboard</button>
+        <div id="left-side">
+          <div id="left-top">
+            <b>Put in ~/.config/nvim/init.lua</b>
+            <div style={`float: right`}>
+              <button onClick={copyToClipboard}>Copy to Clipboard</button>
+            </div>
           </div>
-          <div>Put in ~/.config/nvim/init.lua</div>
-          <textarea id="init-lua" readOnly={true}>
-            {finalConfig}
-          </textarea>
+          <pre>
+            <code class="language-lua" id="finalConfig"></code>
+          </pre>
         </div>
-        <div style={`margin-left: 5px`}>
+        <div id="divider"></div>
+        <div id="right-side">
           <h2>Package Manager</h2>
           <select
             onInput={(e) =>
@@ -132,27 +145,40 @@ vim.o.shiftwidth = ${current.indentSize}
 
           <h2>Plugins</h2>
           {config.plugins.map((plugin) => (
-            <div className={`plugin ${chosen()[plugin.slug] && "expanded"}`}>
-              <div className="header">
-                <input
-                  type="checkbox"
-                  checked={!!chosen()[plugin.slug]}
-                  onInput={(e) =>
-                    togglePlugin(plugin.slug, e.currentTarget.checked)
-                  }
-                />
-                {plugin.name}
+            <div class={`plugin ${plugin.slug} `}>
+              <div class="header">
+                <div class="checkbox">
+                  <input
+                    type="checkbox"
+                    checked={!!chosen()[plugin.slug]}
+                    onInput={(e) =>
+                      togglePlugin(plugin.slug, e.currentTarget.checked)
+                    }
+                  />
+                </div>
+                <div>
+                  <div class="pluginName">
+                    <b>{plugin.name}</b>
+                    <a target="_blank" href={plugin.homepage}>
+                      <img src={iconLinkout} class="homepageLink" style="" />
+                    </a>
+                  </div>
+                  <div class="pluginDescription">{plugin.description}</div>
+                </div>
               </div>
               {plugin.options.length > 0 && (
-                <div className="extra">
+                <div
+                  class={`options ${chosen()[plugin.slug] ? "expanded" : ""}`}
+                >
                   {plugin.options.map((opt) => (
-                    <div>
+                    <div style="display: flex; align-items: center">
                       <input
                         type="checkbox"
+                        style="margin-right: 5px"
                         checked={
                           !!(
                             chosen()[plugin.slug] &&
-                            chosen()[plugin.slug][opt.slug]
+                            chosen()[plugin.slug].includes(opt.slug)
                           )
                         }
                         onInput={(e) =>
@@ -173,9 +199,8 @@ vim.o.shiftwidth = ${current.indentSize}
         </div>
       </div>
       <div id="footer">
-        <b>Version 0.0.1</b>. Send me an email at{" "}
-        <a href="mailto:dan@axelby.com">mailto:dan@axelby.com</a> with any
-        relevant questions, comments, suggestions, etc.
+        <b>Version 0.1.0</b>. Send me an email at (dan at axelby dot com) with
+        any questions, comments, suggestions, etc.
       </div>
     </div>
   );
